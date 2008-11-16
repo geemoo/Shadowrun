@@ -2,16 +2,24 @@ require 'optparse'
     
 class Roller
     def initialize()
-        @edge = false
-        @extended = false
+        edge = false
+        extended = false
         
         @options = OptionParser.new()
 
-        @options.on("--edge", "-e") {|val| @edge = true }
-        @options.on("--extended", "-x") {|val| @extended = true }
+        @options.on("--edge", "-e") {|val| edge = true }
+        @options.on("--extended", "-x") {|val| extended = true }
         @options.on("--help", "-h") {|val| puts @options.to_s(); exit; }
 
         @dice = @options.parse(ARGV)[0].to_i()
+    
+        if(edge)
+            edge()
+        elsif(extended)
+            extended()
+        else
+            standard()
+        end
     end
 
     # rolls random dice
@@ -66,13 +74,4 @@ class Roller
     end
     
     roller = Roller.new()
-
-    if(@edge)
-        puts("EDGE")
-        roller.edge()
-    elsif(@extended)
-        roller.extended()
-    else
-        roller.standard()
-    end
 end # Roller
