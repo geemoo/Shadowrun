@@ -72,6 +72,10 @@ class Roller
 
         output(ones, hits)
     end
+
+    def extended()
+        
+    end
     
     roller = Roller.new()
 end # Roller
