@@ -1,5 +1,22 @@
+#!/usr/bin/ruby
+
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#  
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#  
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Copyright Steven Lusk, 2009
+
 require 'optparse'
-    
+ 
 class Roller
 
     class GlitchException < RuntimeError
@@ -23,6 +40,8 @@ class Roller
         extended = false
         threshold = 0
         
+        @maximum = 1000
+        
         @options = OptionParser.new()
 
         @options.on("--edge", "-e") {|val| edge = true }
@@ -30,6 +49,7 @@ class Roller
             extended = true
             threshold = val.to_i()
         end
+        @options.on("--max=MAXIMUM_HITS", "-m") {|val| @maximum = val.to_i(); }
         @options.on("--help", "-h") {|val| puts @options.to_s(); exit; }
 
         @dice = @options.parse(ARGV)[0].to_i()
@@ -70,11 +90,19 @@ class Roller
         end
         return [ fives, sixes ]
     end
+
+    def max(hits)
+        if(hits > @maximum)
+            return @maximum
+        else
+            return hits
+        end
+    end
     
     def standard()
         begin
             result = roll( @dice )
-            hits = result[0] + result[1]
+            hits = max(result[0] + result[1])
             puts( "Hits:  #{hits}" )
             return hits
         rescue GlitchException
@@ -95,7 +123,7 @@ class Roller
         begin
             until( result[1] <= 0 )
                 result = roll( result[1] )
-                hits += result[0] + result[1]
+                hits += max(result[0] + result[1])
             end
         rescue GlitchException
             retry
@@ -113,7 +141,7 @@ class Roller
             while( total_hits < threshold )
                 rolls += 1
                 result = roll( @dice )
-                total_hits += result[0] + result[1]
+                total_hits += max(result[0] + result[1])
             end
             output = "Intervals:  #{rolls}"
 
