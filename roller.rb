@@ -40,7 +40,7 @@ class Roller
         extended = false
         threshold = 0
         
-        @maximum = 1000
+        maximum = 1000
         
         @options = OptionParser.new()
 
@@ -49,17 +49,17 @@ class Roller
             extended = true
             threshold = val.to_i()
         end
-        @options.on("--max=MAXIMUM_HITS", "-m") {|val| @maximum = val.to_i(); }
+        @options.on("--max=MAXIMUM_HITS", "-m") {|val| maximum = val.to_i(); }
         @options.on("--help", "-h") {|val| puts @options.to_s(); exit; }
 
         @dice = @options.parse(ARGV)[0].to_i()
     
         if(edge)
-            edge()
+            edge(maximum)
         elsif(extended)
-            extended(threshold)
+            extended(threshold, maximum)
         else
-            standard()
+            standard(maximum)
         end
     end
 
@@ -91,18 +91,18 @@ class Roller
         return [ fives, sixes ]
     end
 
-    def max(hits)
-        if(hits > @maximum)
-            return @maximum
+    def max(maximum, hits)
+        if(hits > maximum)
+            return maximum
         else
             return hits
         end
     end
     
-    def standard()
+    def standard(maximum)
         begin
             result = roll( @dice )
-            hits = max(result[0] + result[1])
+            hits = max(maximum, result[0] + result[1])
             puts( "Hits:  #{hits}" )
             return hits
         rescue GlitchException
@@ -110,7 +110,7 @@ class Roller
         end
     end
     
-    def edge()
+    def edge(maximum)
         begin
             result = roll( @dice )
         rescue GlitchException
@@ -123,7 +123,7 @@ class Roller
         begin
             until( result[1] <= 0 )
                 result = roll( result[1] )
-                hits += max(result[0] + result[1])
+                hits += max(maximum, result[0] + result[1])
             end
         rescue GlitchException
             retry
@@ -133,7 +133,7 @@ class Roller
         return hits
     end
 
-    def extended(threshold)
+    def extended(threshold, maximum)
         total_hits = 0
         rolls = 0
         
@@ -141,7 +141,7 @@ class Roller
             while( total_hits < threshold )
                 rolls += 1
                 result = roll( @dice )
-                total_hits += max(result[0] + result[1])
+                total_hits += max(maximum, result[0] + result[1])
             end
             output = "Intervals:  #{rolls}"
 
