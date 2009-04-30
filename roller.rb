@@ -138,9 +138,9 @@ class Roller
         rolls = 0
         
         begin
-            while( total_hits < threshold )
+            while( total_hits < threshold && @dice >= rolls )
                 rolls += 1
-                result = roll( @dice )
+                result = roll( @dice - rolls + 1 )
                 total_hits += max(maximum, result[0] + result[1])
             end
             output = "Intervals:  #{rolls}"
