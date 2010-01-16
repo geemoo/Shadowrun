@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/ruby -w
 
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -104,11 +104,7 @@ class Roller
         hits = 0
         begin
                 team = 0
-                begin
-                        team = max(teamwork( @dice[0..-2] )) 
-                rescue GlitchException #Must be Critical to get here
-                        hits = hits - 1
-                end
+                team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
                 result = roll( @dice[0] + team )
                 hits = max(result[0] + result[1])
                 return hits
@@ -123,11 +119,7 @@ class Roller
         begin
                 hits = 0
                 team = 0
-                begin
-                        team = max(teamwork( @dice[0..-2] ))
-                rescue GlitchException #Must be Critical to get here
-                        hits = hits - 1
-                end
+                team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
                 result = roll( @dice[0] + team ) # This is probably not what the rules intend
         rescue GlitchException
                 print($!.to_s())
@@ -151,20 +143,16 @@ class Roller
     # Returns number of rolls (intervals) required to complete the test
     # or -1 if the number of rolls exceeds the original dice + 1
     def extended(threshold)
-        total_hits = 0
+        hits = 0
         rolls = 0
         clone = @dice
         team = 0
         
         begin
-            while( total_hits < threshold && clone[0] > 0 )
-                begin
-                        team = max(teamwork( @dice[0..-2] ))
-                rescue GlitchException #Must be Critical to get here
-                        hits = hits - 3
-                end
+            while( hits < threshold && clone[0] > 0 )
+                team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
                 result = roll( clone[0] + team )
-                total_hits = total_hits + max(result[0] + result[1])
+                hits = hits + max(result[0] + result[1])
                 clone.map! {|d| d - 1;}
                 rolls = rolls + 1
             end
@@ -172,7 +160,7 @@ class Roller
             if($!.hits <= 0)
                 return "#{$!.to_s()}   #{rolls}" 
             else
-                total_hits = total_hits - ( rand(6) + 1 )
+                hits = hits - ( rand(6) + 1 )
                 retry
             end
         end
@@ -196,10 +184,12 @@ class Roller
                                 if($!.hits > 0)
                                         retry
                                 else 
-                                        raise
+                                        yield
+                                        result = [0, 0]
                                 end
                         end
 
+                puts("Team")
                         assist_dice = assist_dice + result[0] + result[1]
                 end
         end
