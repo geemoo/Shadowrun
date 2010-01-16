@@ -20,7 +20,7 @@ require 'optparse'
 class Roller
 
     class GlitchException < RuntimeError
-        attr :critical
+        attr :hits
 
         def initialize( hits )
             @hits = hits
@@ -36,30 +36,33 @@ class Roller
     end
     
     def initialize()
+        @maximum = 1000
+
         edge = false
         extended = false
+        team = false
+
         threshold = 0
-        
-        maximum = 1000
+        assist = [ nil ]
         
         @options = OptionParser.new()
 
-        @options.on("--edge", "-e") {|val| edge = true }
-        @options.on("--extended=THRESHOLD", "-x") do |val| 
+        @options.on("--edge", "-e", "Hits") {|val| edge = true }
+        @options.on("--extended=THRESHOLD", "-x", "Intervals") do |val| 
             extended = true
             threshold = val.to_i()
         end
-        @options.on("--max=MAXIMUM_HITS", "-m") {|val| maximum = val.to_i(); }
-        @options.on("--help", "-h") {|val| puts @options.to_s(); exit; }
+        @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
+        @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
 
-        @dice = @options.parse(ARGV)[0].to_i()
+        @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
     
         if(edge)
-            edge(maximum)
+            puts(edge())
         elsif(extended)
-            extended(threshold, maximum)
+            puts(extended(threshold))
         else
-            standard(maximum)
+            puts(standard())
         end
     end
 
@@ -81,37 +84,54 @@ class Roller
             end
         end
 
-        if( (ones * 2) >= @dice )
+        if( (ones * 2) >= @dice[0] )
             raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
     end
 
-    def max(maximum, hits)
-        if(hits > maximum)
-            return maximum
+    # Garuantees that the input is <= @maximum
+    def max(hits)
+        if(hits > @maximum)
+            return @maximum
         else
             return hits
         end
     end
     
-    def standard(maximum)
+    # Rolls a standard (non-edge, non-extended) test
+    def standard()
+        hits = 0
         begin
-            result = roll( @dice )
-            hits = max(maximum, result[0] + result[1])
-            puts( "Hits:  #{hits}" )
-            return hits
+                team = 0
+                begin
+                        team = max(teamwork( @dice[0..-2] )) 
+                rescue GlitchException #Must be Critical to get here
+                        hits = hits - 1
+                end
+                result = roll( @dice[0] + team )
+                hits = max(result[0] + result[1])
+                return hits
         rescue GlitchException
-            puts($!.to_s())
+                print($!.to_s())
+                return ""
         end
     end
     
-    def edge(maximum)
+    # Rolls an edge test, which rerolls 6's recursively
+    def edge()
         begin
-            result = roll( @dice )
+                hits = 0
+                team = 0
+                begin
+                        team = max(teamwork( @dice[0..-2] ))
+                rescue GlitchException #Must be Critical to get here
+                        hits = hits - 1
+                end
+                result = roll( @dice[0] + team ) # This is probably not what the rules intend
         rescue GlitchException
-            puts($!.to_s())
-            return 0
+                print($!.to_s())
+                return ""
         end
 
         hits = result[0] + result[1]
@@ -119,42 +139,72 @@ class Roller
         begin
             until( result[1] <= 0 )
                 result = roll( result[1] )
-                hits += max(maximum, result[0] + result[1])
+                hits = hits + max(result[0] + result[1])
             end
         rescue GlitchException
             retry
         end
 
-        puts( "Hits:  #{hits}" )
         return hits
     end
 
-    def extended(threshold, maximum)
+    # Returns number of rolls (intervals) required to complete the test
+    # or -1 if the number of rolls exceeds the original dice + 1
+    def extended(threshold)
         total_hits = 0
         rolls = 0
+        clone = @dice
+        team = 0
         
         begin
-            while( total_hits < threshold && @dice >= rolls )
-                rolls += 1
-                result = roll( @dice - rolls + 1 )
-                total_hits += max(maximum, result[0] + result[1])
+            while( total_hits < threshold && clone[0] > 0 )
+                begin
+                        team = max(teamwork( @dice[0..-2] ))
+                rescue GlitchException #Must be Critical to get here
+                        hits = hits - 3
+                end
+                result = roll( clone[0] + team )
+                total_hits = total_hits + max(result[0] + result[1])
+                clone.map! {|d| d - 1;}
+                rolls = rolls + 1
             end
-            output = "Intervals:  #{rolls}"
-
         rescue GlitchException
             if($!.hits <= 0)
-                output = "#{$!.to_s()}   Intervals:  #{rolls}  Hits:  #{total_hits}"
+                return "#{$!.to_s()}   #{rolls}" 
             else
-                total_hits -= ( rand(6) + 1 )
+                total_hits = total_hits - ( rand(6) + 1 )
                 retry
             end
         end
 
-        if( rolls <= @dice * @dice )
-            puts( output )
+        if(rolls <= @dice[0])
+                return rolls
         else
-            puts( "#{output}!" )
+                return "Fail"
         end
+    end
+
+    # Returns the number of extra dice achieved by teamwork
+    def teamwork(teammates)
+        assist_dice = 0
+
+        if( teammates != nil)
+                teammates.each do |t|
+                        begin
+                                result = roll(t)
+                        rescue GlitchException
+                                if($!.hits > 0)
+                                        retry
+                                else 
+                                        raise
+                                end
+                        end
+
+                        assist_dice = assist_dice + result[0] + result[1]
+                end
+        end
+
+        return assist_dice 
     end
     
 end # Roller
