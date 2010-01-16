@@ -22,15 +22,15 @@ class Roller
     class GlitchException < RuntimeError
         attr :critical
 
-        def initialize( critical )
-            @critical = critical
+        def initialize( hits )
+            @hits = hits
         end
 
         def to_s()
-            if( critical )
+            if( @hits <= 0 )
                 return "CRITICAL GLITCH!!!"
             else
-                return "Glitch!"
+                return "Glitch (#{@hits})!"
             end
         end
     end
@@ -82,11 +82,7 @@ class Roller
         end
 
         if( (ones * 2) >= @dice )
-            if( (fives + sixes) <= 0 )
-                raise GlitchException.new(true) 
-            else
-                raise GlitchException.new(false) 
-            end
+            raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
     end
@@ -146,7 +142,7 @@ class Roller
             output = "Intervals:  #{rolls}"
 
         rescue GlitchException
-            if($!.critical)
+            if($!.hits <= 0)
                 output = "#{$!.to_s()}   Intervals:  #{rolls}  Hits:  #{total_hits}"
             else
                 total_hits -= ( rand(6) + 1 )
