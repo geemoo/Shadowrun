@@ -84,7 +84,7 @@ class Roller
             end
         end
 
-        if( (ones * 2) >= @dice[0] )
+        if( (ones * 2) >= @dice[-1] )
             raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
@@ -103,9 +103,8 @@ class Roller
     def standard()
         hits = 0
         begin
-                team = 0
                 team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
-                result = roll( @dice[0] + team )
+                result = roll( @dice[-1] + team )
                 hits = max(result[0] + result[1])
                 return hits
         rescue GlitchException
@@ -116,11 +115,11 @@ class Roller
     
     # Rolls an edge test, which rerolls 6's recursively
     def edge()
+        # Bootstrap a standard test
+        hits = 0 
         begin
-                hits = 0
-                team = 0
                 team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
-                result = roll( @dice[0] + team ) # This is probably not what the rules intend
+                result = roll( @dice[-1] + team ) # This is probably not what the rules intend
         rescue GlitchException
                 print($!.to_s())
                 return ""
@@ -128,10 +127,12 @@ class Roller
 
         hits = result[0] + result[1]
 
+        # Reroll 6's recursively for Edge
+        # Ignore glitches because Catalyst told me so when asked by email
         begin
             until( result[1] <= 0 )
                 result = roll( result[1] )
-                hits = hits + max(result[0] + result[1])
+                hits += max(result[0] + result[1])
             end
         rescue GlitchException
             retry
@@ -146,26 +147,29 @@ class Roller
         hits = 0
         rolls = 0
         clone = @dice
-        team = 0
         
         begin
-            while( hits < threshold && clone[0] > 0 )
+            while( hits < threshold && clone[-1] > 0 )
                 team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
-                result = roll( clone[0] + team )
-                hits = hits + max(result[0] + result[1])
+                result = roll( clone[-1] + team )
+                hits += max(result[0] + result[1])
                 clone.map! {|d| d - 1;}
-                rolls = rolls + 1
+                rolls += 1
             end
         rescue GlitchException
             if($!.hits <= 0)
                 return "#{$!.to_s()}   #{rolls}" 
             else
                 hits = hits - ( rand(6) + 1 )
-                retry
+                if( hits <= 0 )
+                        return "Fail"
+                else
+                        retry
+                end
             end
         end
 
-        if(rolls <= @dice[0])
+        if(rolls <= @dice[-1])
                 return rolls
         else
                 return "Fail"
@@ -189,8 +193,7 @@ class Roller
                                 end
                         end
 
-                puts("Team")
-                        assist_dice = assist_dice + result[0] + result[1]
+                        assist_dice += result[0] + result[1]
                 end
         end
 
