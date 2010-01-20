@@ -40,10 +40,13 @@ class Roller
 
         edge = false
         extended = false
+        unlimited = false
         team = false
+        leader = false
 
         threshold = 0
         assist = [ nil ]
+        leader_dice = 0
         
         @options = OptionParser.new()
 
@@ -52,15 +55,29 @@ class Roller
             extended = true
             threshold = val.to_i()
         end
+        @options.on("--unlimited=THRESHOLD", "-u", "Unlimited extended.  Intervals.") do |val| 
+            unlimited = true
+            threshold = val.to_i()
+        end
         @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
+        @options.on("--leader=DICE", "-l", "Explicit Leader") do |val| 
+                leader = true
+                leader_dice = val.to_i() 
+        end
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
 
         @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
+
+        if(leader) 
+                @dice.push(leader_dice)
+        end
     
         if(edge)
             puts(edge())
         elsif(extended)
-            puts(extended(threshold))
+            puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
+        elsif(unlimited)
+            puts(extended(threshold) { })
         else
             puts(standard())
         end
@@ -84,7 +101,7 @@ class Roller
             end
         end
 
-        if( (ones * 2) >= @dice[-1] )
+        if( (ones * 2) >= @dice.last() )
             raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
@@ -104,7 +121,7 @@ class Roller
         hits = 0
         begin
                 team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
-                result = roll( @dice[-1] + team )
+                result = roll( @dice.last() + team )
                 hits = max(result[0] + result[1])
                 return hits
         rescue GlitchException
@@ -119,7 +136,7 @@ class Roller
         hits = 0 
         begin
                 team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
-                result = roll( @dice[-1] + team ) # This is probably not what the rules intend
+                result = roll( @dice.last() + team ) # This is probably not what the rules intend
         rescue GlitchException
                 print($!.to_s())
                 return ""
@@ -146,14 +163,13 @@ class Roller
     def extended(threshold)
         hits = 0
         rolls = 0
-        clone = @dice
         
         begin
-            while( hits < threshold && clone[-1] > 0 )
+            while( hits < threshold && @dice.last() > 0 )
                 team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
-                result = roll( clone[-1] + team )
+                result = roll( @dice.last() + team )
                 hits += max(result[0] + result[1])
-                clone.map! {|d| d - 1;}
+                yield
                 rolls += 1
             end
         rescue GlitchException
@@ -169,7 +185,7 @@ class Roller
             end
         end
 
-        if(rolls <= @dice[-1])
+        if(@dice.last() >= 0)
                 return rolls
         else
                 return "Fail"
