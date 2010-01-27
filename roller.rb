@@ -37,17 +37,19 @@ class Roller
     
     def initialize()
         @maximum = 1000
+        @verbose = false
 
         switch = ""
         leader = false
 
         threshold = 0
-        assist = [ nil ]
+        assist = [ ]
         leader_dice = 0
-        roll_dice = nil
+        roll_dice = ""
 
         @options = OptionParser.new()
 
+        @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
         @options.on("--edge", "-e", "Hits") {|val| switch = "edge" }
         @options.on("--extended=THRESHOLD", "-x", "Intervals") do |val| 
             switch = "extended"
@@ -57,15 +59,15 @@ class Roller
             switch = "unlimited"
             threshold = val.to_i()
         end
-        @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
         @options.on("--leader=DICE", "-l", "Explicit Leader") do |val| 
                 leader = true
                 leader_dice = val.to_i() 
         end
-        @options.on("--roll=DICE", "-r", "Arbitrary dice roll (yyDxx).  Implies -d.") do |val|
+        @options.on("--roll=DICE", "-r", "Arbitrary dice roll (##d##).  Implies -v.") do |val|
                 switch = "roll"
                 roll_dice = val
         end
+        @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
 
         @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
@@ -95,9 +97,16 @@ class Roller
         fives = 0
         sixes = 0
         ones = 0
+        display = 0
+
+        output = [ ]
     
         dice.times() do |i|
-            case rand(6)
+            display = rand(6)
+
+            output.push(display + 1)
+
+            case display
             when 0
                 sixes = sixes.next()
             when 1
@@ -105,6 +114,10 @@ class Roller
             when 2
                 ones = ones.next()
             end
+        end
+
+        if(@verbose)
+                puts(output.to_s())
         end
 
         if( (ones * 2) >= @dice.last() )
@@ -229,13 +242,15 @@ class Roller
                 dice = matches[1].to_i()
                 faces = matches[2].to_i()
 
+                output = [ ]
+
                 dice.times() do |i|
-                        print((rand(faces) + 1).to_s() << " ")
+                        output.push(rand(faces) + 1)
                 end
-                puts("")
+                puts(output.to_s())
                 puts("Jean, stop rolling random junk!")  # To be removed
         else
-                puts("Dice definition not in (yyDxx) format")
+                puts("Dice definition not in (##d##) format")
         end
     end
     
