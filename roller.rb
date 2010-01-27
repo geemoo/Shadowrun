@@ -38,6 +38,7 @@ class Roller
     def initialize()
         @maximum = 1000
         @verbose = false
+        @dramatic = 0
 
         switch = ""
         leader = false
@@ -67,6 +68,13 @@ class Roller
                 switch = "roll"
                 roll_dice = val
         end
+        @options.on("--drama [TIME]", "-d", "Wait for 1 to time (default 5) seconds between rolls") do |val| 
+                if(val == nil)
+                        @dramatic = 5.0
+                else
+                        @dramatic = val.to_f(); 
+                end
+        end
         @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
 
@@ -74,6 +82,12 @@ class Roller
 
         if(leader) 
                 @dice.push(leader_dice)
+        end
+
+        if(@dice.length() == 0)
+                puts("Dice pool not supplied, error")
+                puts(@options.to_s())
+                exit
         end
     
         case switch
@@ -115,6 +129,8 @@ class Roller
                 ones = ones.next()
             end
         end
+
+        sleep(rand(@dramatic) + 1)
 
         if(@verbose)
                 puts(output.to_s())
