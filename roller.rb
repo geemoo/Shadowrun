@@ -1,4 +1,4 @@
-#!/usr/bin/ruby -w
+#!/usr/bin/ruby1.9 -w
 
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -38,31 +38,33 @@ class Roller
     def initialize()
         @maximum = 1000
 
-        edge = false
-        extended = false
-        unlimited = false
-        team = false
+        switch = ""
         leader = false
 
         threshold = 0
         assist = [ nil ]
         leader_dice = 0
-        
+        roll_dice = nil
+
         @options = OptionParser.new()
 
-        @options.on("--edge", "-e", "Hits") {|val| edge = true }
+        @options.on("--edge", "-e", "Hits") {|val| switch = "edge" }
         @options.on("--extended=THRESHOLD", "-x", "Intervals") do |val| 
-            extended = true
+            switch = "extended"
             threshold = val.to_i()
         end
         @options.on("--unlimited=THRESHOLD", "-u", "Unlimited extended.  Intervals.") do |val| 
-            unlimited = true
+            switch = "unlimited"
             threshold = val.to_i()
         end
         @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
         @options.on("--leader=DICE", "-l", "Explicit Leader") do |val| 
                 leader = true
                 leader_dice = val.to_i() 
+        end
+        @options.on("--roll=DICE", "-r", "Arbitrary dice roll (yyDxx).  Implies -d.") do |val|
+                switch = "roll"
+                roll_dice = val
         end
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
 
@@ -72,12 +74,16 @@ class Roller
                 @dice.push(leader_dice)
         end
     
-        if(edge)
+        case switch
+
+        when "edge"
             puts(edge())
-        elsif(extended)
+        when "extended"
             puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
-        elsif(unlimited)
+        when "unlimited"
             puts(extended(threshold) { })
+        when "roll"
+            puts(facets(roll_dice))
         else
             puts(standard())
         end
@@ -178,7 +184,7 @@ class Roller
             else
                 hits = hits - ( rand(6) + 1 )
                 if( hits <= 0 )
-                        return "Fail"
+                        return "Fail (#{rolls})"
                 else
                         retry
                 end
@@ -188,7 +194,7 @@ class Roller
         if(@dice.last() >= 0)
                 return rolls
         else
-                return "Fail"
+                return "Fail (#{rolls})"
         end
     end
 
@@ -214,6 +220,23 @@ class Roller
         end
 
         return assist_dice 
+    end
+
+    def facets(roll_dice)
+        regex = Regexp.new('([0-9]+)[Dd]([0-9]+)')
+        if regex =~ roll_dice
+                matches = regex.match(roll_dice)
+                dice = matches[1].to_i()
+                faces = matches[2].to_i()
+
+                dice.times() do |i|
+                        print((rand(faces) + 1).to_s() << " ")
+                end
+                puts("")
+                puts("Jean, stop rolling random junk!")  # To be removed
+        else
+                puts("Dice definition not in (yyDxx) format")
+        end
     end
     
 end # Roller
