@@ -39,6 +39,7 @@ class Roller
         @maximum = 1000
         @verbose = false
         @dramatic = 0
+        @drama = false
 
         switch = ""
         leader = false
@@ -69,6 +70,7 @@ class Roller
                 roll_dice = val
         end
         @options.on("--drama [TIME]", "-d", "Wait for 1 to time (default 5) seconds between rolls") do |val| 
+                @drama = true
                 if(val == nil)
                         @dramatic = 5.0
                 else
@@ -84,7 +86,7 @@ class Roller
                 @dice.push(leader_dice)
         end
 
-        if(@dice.length() == 0)
+        if((@dice.length() < 1) && (switch != "roll"))
                 puts("Dice pool not supplied, error")
                 puts(@options.to_s())
                 exit
@@ -130,7 +132,9 @@ class Roller
             end
         end
 
-        sleep(rand(@dramatic) + 1)
+        if(@drama)
+                sleep(rand(@dramatic))
+        end
 
         if(@verbose)
                 puts(output.to_s())
@@ -264,7 +268,7 @@ class Roller
                         output.push(rand(faces) + 1)
                 end
                 puts(output.to_s())
-                puts("Jean, stop rolling random junk!")  # To be removed
+                puts("Jean, stop randomising!")  # To be removed
         else
                 puts("Dice definition not in (##d##) format")
         end
