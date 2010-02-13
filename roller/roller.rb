@@ -205,11 +205,11 @@ class Roller
         
         begin
             while( hits < threshold && @dice.last() > 0 )
+                rolls += 1
                 team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
                 result = roll( @dice.last() + team )
                 hits += max(result[0] + result[1])
                 yield
-                rolls += 1
             end
         rescue GlitchException
             if($!.hits <= 0)
@@ -268,7 +268,6 @@ class Roller
                         output.push(rand(faces) + 1)
                 end
                 puts(output.to_s())
-                puts("Jean, stop randomising!")  # To be removed
         else
                 puts("Dice definition not in (##d##) format")
         end
