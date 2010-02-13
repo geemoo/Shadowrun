@@ -13,7 +13,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Copyright Steven Lusk, 2009
+# Copyright Steven Lusk, 2009, 2010
 
 require 'optparse'
  
