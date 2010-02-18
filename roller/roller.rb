@@ -40,6 +40,7 @@ class Roller
         @verbose = false
         @dramatic = 0
         @drama = false
+        @abort = 0
 
         switch = ""
         leader = false
@@ -77,9 +78,16 @@ class Roller
                         @dramatic = val.to_f(); 
                 end
         end
+
         @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
-
+        @options.on("--abort=[POOL]", "-a", "Abort any roll with a pool less than or equal to POOL") do |val| 
+                if(val == nil)
+                        @abort = 2
+                else
+                        @abort = val
+                end
+        end
         @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
 
         if(leader) 
@@ -117,27 +125,28 @@ class Roller
 
         output = [ ]
     
-        dice.times() do |i|
-            display = rand(6)
+        if(dice > @abort)
+                dice.times() do |i|
+                        display = rand(6)
 
-            output.push(display + 1)
+                        output.push(display + 1)
 
-            case display
-            when 0
-                sixes = sixes.next()
-            when 1
-                fives = fives.next()
-            when 2
-                ones = ones.next()
-            end
-        end
-
-        if(@drama)
-                sleep(rand(@dramatic))
+                        case display
+                        when 5
+                                sixes = sixes.next()
+                        when 4
+                                fives = fives.next()
+                        when 0
+                                ones = ones.next()
+                        end
+                end
+                if(@drama)
+                        sleep(rand(@dramatic))
+                end
         end
 
         if(@verbose)
-                puts(output.to_s())
+                puts(output.sort.to_s())
         end
 
         if( (ones * 2) >= @dice.last() )
@@ -204,18 +213,26 @@ class Roller
         rolls = 0
         
         begin
+            # @dice.list() is a synonym for Leader
             while( hits < threshold && @dice.last() > 0 )
                 rolls += 1
+                # If this is a teamwork test, roll team dice
+                # All team members are limited by the leaders skill (--max), if provided
+                # Glitches will reduce net hits by 3
                 team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
+                # Do a standard roll, adding the team hits to Leader
                 result = roll( @dice.last() + team )
+                # Sum the hits
                 hits += max(result[0] + result[1])
+                # Reduce the dice pools if using the extended test time restriction
+                # (normal extended tests should do this)
                 yield
             end
         rescue GlitchException
             if($!.hits <= 0)
                 return "#{$!.to_s()}   #{rolls}" 
             else
-                hits = hits - ( rand(6) + 1 )
+                hits -=  rand(6) + 1 
                 if( hits <= 0 )
                         return "Fail (#{rolls})"
                 else
@@ -224,7 +241,11 @@ class Roller
             end
         end
 
-        if(@dice.last() >= 0)
+        if(@verbose)
+                puts("Hits: #{hits}")
+        end
+
+        if(hits >= threshold)
                 return rolls
         else
                 return "Fail (#{rolls})"
