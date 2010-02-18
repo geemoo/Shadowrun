@@ -85,7 +85,7 @@ class Roller
                 if(val == nil)
                         @abort = 2
                 else
-                        @abort = val
+                        @abort = val.to_i()
                 end
         end
         @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
