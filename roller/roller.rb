@@ -52,21 +52,21 @@ class Roller
 
         @options = OptionParser.new()
 
-        @options.on("--max=MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
+        @options.on("--max MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
         @options.on("--edge", "-e", "Hits") {|val| switch = "edge" }
-        @options.on("--extended=THRESHOLD", "-x", "Intervals") do |val| 
+        @options.on("--extended THRESHOLD", "-x", "Intervals") do |val| 
             switch = "extended"
             threshold = val.to_i()
         end
-        @options.on("--unlimited=THRESHOLD", "-u", "Unlimited extended.  Intervals.") do |val| 
+        @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Intervals.") do |val| 
             switch = "unlimited"
             threshold = val.to_i()
         end
-        @options.on("--leader=DICE", "-l", "Explicit Leader") do |val| 
+        @options.on("--leader DICE", "-l", "Explicit Leader") do |val| 
                 leader = true
                 leader_dice = val.to_i() 
         end
-        @options.on("--roll=DICE", "-r", "Arbitrary dice roll (##d##).  Implies -v.") do |val|
+        @options.on("--roll DICE", "-r", "Arbitrary dice roll (##d##).  Implies -v.") do |val|
                 switch = "roll"
                 roll_dice = val
         end
@@ -81,7 +81,7 @@ class Roller
 
         @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
-        @options.on("--abort=[POOL]", "-a", "Abort any roll with a pool less than or equal to POOL") do |val| 
+        @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL") do |val| 
                 if(val == nil)
                         @abort = 2
                 else
