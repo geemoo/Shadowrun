@@ -52,24 +52,27 @@ class Roller
 
         @options = OptionParser.new()
 
-        @options.on("--max MAXIMUM", "-m", "Limit hits to maximum per roll", Integer) {|val| @maximum = val; }
-        @options.on("--edge", "-e", "Hits") {|val| switch = "edge" }
-        @options.on("--extended THRESHOLD", "-x", "Intervals", Integer) do |val| 
+        @options.banner = "roller is a dice rolling program for the Shadowrun 20th Anniversary game system. 
+  Usage: roller [options] dice 
+  Options:"
+        @options.on("--max MAXIMUM", "-m", "Limit hits to MAXIMUM per roll", Integer) {|val| @maximum = val; }
+        @options.on("--edge", "-e", "Result in hits.") {|val| switch = "edge" }
+        @options.on("--extended THRESHOLD", "-x", "Result in intervals.", Integer) do |val| 
             switch = "extended"
             threshold = val
         end
-        @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Intervals.", Integer) do |val| 
+        @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Result in intervals.", Integer) do |val| 
             switch = "unlimited"
             threshold = val
         end
-        @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL", Integer) do |val| 
+        @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.", Integer) do |val| 
                 if(val == nil)
                         @abort = 2
                 else
                         @abort = val
                 end
         end
-        @options.on("--leader DICE", "-l", "Explicit Leader", Integer) do |val| 
+        @options.on("--leader DICE", "-l", "Explicit Leader.", Integer) do |val| 
                 leader = true
                 leader_dice = val
         end
@@ -77,7 +80,7 @@ class Roller
                 switch = "roll"
                 roll_dice = val
         end
-        @options.on("--drama [TIME]", "-d", "Wait for 1 to time (default 5) seconds between rolls", Float) do |val| 
+        @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 5.0) seconds between rolls.", Float) do |val| 
                 @drama = true
                 if(val == nil)
                         @dramatic = 5.0
@@ -85,10 +88,10 @@ class Roller
                         @dramatic = val
                 end
         end
-        @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
-        @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
+        @options.on("--verbose", "-v", "Report every roll.") {|val| @verbose = true; }
+        @options.on("--help", "-h", "--about", "This message.") {|val| puts @options.to_s(); exit; }
 
-        @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
+        @dice = @options.parse!(ARGV).sort.map! {|x| x.to_i(); }
 
         if(leader) 
                 @dice.push(leader_dice)
