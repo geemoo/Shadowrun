@@ -38,8 +38,7 @@ class Roller
     def initialize()
         @maximum = 1000
         @verbose = false
-        @dramatic = 0
-        @drama = false
+        @dramatic = nil
         @abort = 0
 
         switch = ""
@@ -48,12 +47,11 @@ class Roller
         threshold = 0
         assist = [ ]
         leader_dice = 0
-        roll_dice = ""
 
         @options = OptionParser.new()
 
         @options.banner = "roller is a dice rolling program for the Shadowrun 20th Anniversary game system. 
-  Usage: roller [options] dice 
+  Usage: roller [options] dice | diceDfacets
   Options:"
         @options.on("--max MAXIMUM", "-m", "Limit hits to MAXIMUM per roll", Integer) {|val| @maximum = val; }
         @options.on("--edge", "-e", "Result in hits.") {|val| switch = "edge" }
@@ -76,12 +74,7 @@ class Roller
                 leader = true
                 leader_dice = val
         end
-        @options.on("--roll DICE", "-r", "Arbitrary dice roll (##d##).  Implies -v.") do |val|
-                switch = "roll"
-                roll_dice = val
-        end
         @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 5.0) seconds between rolls.", Float) do |val| 
-                @drama = true
                 if(val == nil)
                         @dramatic = 5.0
                 else
@@ -91,7 +84,25 @@ class Roller
         @options.on("--verbose", "-v", "Report every roll.") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message.") {|val| puts @options.to_s(); exit; }
 
-        @dice = @options.parse!(ARGV).sort.map! {|x| x.to_i(); }
+        # Here we handle the ugliness of "doing the right thing"
+        # with either ## or ##d##
+        # This code is fragile, and will break if 
+        # the two formats are combined in the same command line
+        @dice = @options.parse(ARGV).sort.map! do |x| 
+                regex = Regexp.new('([0-9]+)([Dd]([0-9]+))?')
+                matches = regex.match(x)
+                if(matches[2] != nil)
+                        switch = "facets"
+                        die = matches[1].to_i()
+                        facet = matches[3].to_i()
+                        # Return an array, which will be flatened shortly
+                        [die, facet]
+                else
+                        switch = "roll"
+                        matches[1].to_i()
+                end
+        end
+        @dice.flatten!
 
         if(leader) 
                 @dice.push(leader_dice)
@@ -111,10 +122,12 @@ class Roller
             puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
         when "unlimited"
             puts(extended(threshold) { })
+        when "facets"
+            puts(facets())
         when "roll"
-            puts(facets(roll_dice))
-        else
             puts(standard())
+        else
+            puts("Error:  #{ARGV}")
         end
     end
 
@@ -143,7 +156,7 @@ class Roller
                                 ones = ones.next()
                         end
                 end
-                if(@drama)
+                if(@dramatic != nil)
                         sleep(rand(@dramatic))
                 end
         end
@@ -284,22 +297,18 @@ class Roller
         return assist_dice 
     end
 
-    def facets(roll_dice)
-        regex = Regexp.new('([0-9]+)[Dd]([0-9]+)')
-        if regex =~ roll_dice
-                matches = regex.match(roll_dice)
-                dice = matches[1].to_i()
-                faces = matches[2].to_i()
+    def facets()
+        output = [ ]
 
-                output = [ ]
-
-                dice.times() do |i|
-                        output.push(rand(faces) + 1)
-                end
-                puts(output.to_s())
-        else
-                puts("Dice definition not in (##d##) format")
+        @dice[0].times() do |i|
+                output.push(rand(@dice[1]) + 1)
         end
+        
+        if(@dramatic != nil)
+                sleep(rand(@dramatic))
+        end
+
+        puts(output.sort.to_s())
     end
     
 end # Roller
