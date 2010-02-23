@@ -52,42 +52,42 @@ class Roller
 
         @options = OptionParser.new()
 
-        @options.on("--max MAXIMUM", "-m", "Limit hits to maximum per roll") {|val| @maximum = val.to_i(); }
+        @options.on("--max MAXIMUM", "-m", "Limit hits to maximum per roll", Integer) {|val| @maximum = val; }
         @options.on("--edge", "-e", "Hits") {|val| switch = "edge" }
-        @options.on("--extended THRESHOLD", "-x", "Intervals") do |val| 
+        @options.on("--extended THRESHOLD", "-x", "Intervals", Integer) do |val| 
             switch = "extended"
-            threshold = val.to_i()
+            threshold = val
         end
-        @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Intervals.") do |val| 
+        @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Intervals.", Integer) do |val| 
             switch = "unlimited"
-            threshold = val.to_i()
+            threshold = val
         end
-        @options.on("--leader DICE", "-l", "Explicit Leader") do |val| 
+        @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL", Integer) do |val| 
+                if(val == nil)
+                        @abort = 2
+                else
+                        @abort = val
+                end
+        end
+        @options.on("--leader DICE", "-l", "Explicit Leader", Integer) do |val| 
                 leader = true
-                leader_dice = val.to_i() 
+                leader_dice = val
         end
         @options.on("--roll DICE", "-r", "Arbitrary dice roll (##d##).  Implies -v.") do |val|
                 switch = "roll"
                 roll_dice = val
         end
-        @options.on("--drama [TIME]", "-d", "Wait for 1 to time (default 5) seconds between rolls") do |val| 
+        @options.on("--drama [TIME]", "-d", "Wait for 1 to time (default 5) seconds between rolls", Float) do |val| 
                 @drama = true
                 if(val == nil)
                         @dramatic = 5.0
                 else
-                        @dramatic = val.to_f(); 
+                        @dramatic = val
                 end
         end
-
         @options.on("--verbose", "-v", "Report every roll") {|val| @verbose = true; }
         @options.on("--help", "-h", "--about", "This message") {|val| puts @options.to_s(); exit; }
-        @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL") do |val| 
-                if(val == nil)
-                        @abort = 2
-                else
-                        @abort = val.to_i()
-                end
-        end
+
         @dice = @options.parse(ARGV).sort.map! {|x| x.to_i(); }
 
         if(leader) 
@@ -149,7 +149,7 @@ class Roller
                 puts(output.sort.to_s())
         end
 
-        if( (ones * 2) >= @dice.last() )
+        if( (ones * 2) >= dice)
             raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
@@ -214,11 +214,11 @@ class Roller
         
         begin
             # @dice.list() is a synonym for Leader
-            while( hits < threshold && @dice.last() > 0 )
+            while( hits < threshold && @dice.last() > @abort && hits >= 0)
                 rolls += 1
                 # If this is a teamwork test, roll team dice
                 # All team members are limited by the leaders skill (--max), if provided
-                # Glitches will reduce net hits by 3
+                # Critical glitches will reduce net hits by 3
                 team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
                 # Do a standard roll, adding the team hits to Leader
                 result = roll( @dice.last() + team )
@@ -261,11 +261,16 @@ class Roller
                         begin
                                 result = roll(t)
                         rescue GlitchException
-                                if($!.hits > 0)
-                                        retry
-                                else 
+                                if($!.hits < 1)
+                                        # Critical glitch
+                                        # Let the caller modify it's own variable
                                         yield
                                         result = [0, 0]
+                                else
+                                        # Ignore regular glitches;
+                                        # do this by restarting the loop.  
+                                        # Harmless.
+                                        retry
                                 end
                         end
 
