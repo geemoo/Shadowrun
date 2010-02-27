@@ -41,7 +41,7 @@ class Roller
         @dramatic = nil
         @abort = 0
 
-        switch = ""
+        switch = "roll"
         leader = false
 
         threshold = 0
@@ -98,7 +98,6 @@ class Roller
                         # Return an array, which will be flatened shortly
                         [die, facet]
                 else
-                        switch = "roll"
                         matches[1].to_i()
                 end
         end
@@ -227,7 +226,7 @@ class Roller
     def extended(threshold)
         hits = 0
         rolls = 0
-        
+
         begin
             # @dice.list() is a synonym for Leader
             while( hits < threshold && @dice.last() > @abort && hits >= 0)
