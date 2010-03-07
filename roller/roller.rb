@@ -88,7 +88,7 @@ class Roller
         # with either ## or ##d##
         # This code is fragile, and will break if 
         # the two formats are combined in the same command line
-        @dice = @options.parse(ARGV).sort.map! do |x| 
+        @dice = @options.parse(ARGV).map! do |x| 
                 regex = Regexp.new('([0-9]+)([Dd]([0-9]+))?')
                 matches = regex.match(x)
                 if(matches[2] != nil)
@@ -101,7 +101,7 @@ class Roller
                         matches[1].to_i()
                 end
         end
-        @dice.flatten!
+        @dice = @dice.flatten.sort
 
         if(leader) 
                 @dice.push(leader_dice)
