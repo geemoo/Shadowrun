@@ -157,6 +157,7 @@ class Roller
                 end
                 if(@dramatic != nil)
                         sleep(rand(@dramatic))
+                        put(".")
                 end
         end
 
@@ -305,6 +306,7 @@ class Roller
         
         if(@dramatic != nil)
                 sleep(rand(@dramatic))
+                put(".")
         end
 
         puts(output.sort.to_s())
