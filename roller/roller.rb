@@ -47,6 +47,7 @@ class Roller
         threshold = 0
         assist = [ ]
         leader_dice = 0
+        iterations = 1
 
         @options = OptionParser.new()
 
@@ -63,6 +64,7 @@ class Roller
             switch = "unlimited"
             threshold = val
         end
+        @options.on("--iterations TIMES", "-i", "Perform the test TIMES times.", Integer) {|val| iterations = val; }
         @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.", Integer) do |val| 
                 if(val == nil)
                         @abort = 2
@@ -112,21 +114,34 @@ class Roller
                 puts(@options.to_s())
                 exit
         end
-    
-        case switch
 
-        when "edge"
-            puts(edge())
-        when "extended"
-            puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
-        when "unlimited"
-            puts(extended(threshold) { })
-        when "facets"
-            puts(facets())
-        when "roll"
-            puts(standard())
-        else
-            puts("Error:  #{ARGV}")
+        immutable_dice = Array.new(@dice)
+    
+        iterations.times() do |i|
+                case switch
+
+                when "edge"
+                        puts(edge())
+                when "extended"
+                        # Yes, @dice is basically a global variable.
+                        # I did it this way because _every_ function uses it, but it's still wrong.
+                        # It becomes a problem here, where @dice is being modified,
+                        # but is re-used if -i is present.
+                        @dice = Array.new(immutable_dice)
+                        puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
+                when "unlimited"
+                        puts(extended(threshold) { })
+                when "facets"
+                        puts(facets())
+                when "roll"
+                        puts(standard())
+                else
+                        puts("Error:  #{ARGV}")
+                end
+
+                if(i < iterations - 1) 
+                        puts("---")
+                end
         end
     end
 
@@ -162,13 +177,13 @@ class Roller
         end
 
         if(@verbose > 0)
-                print(output.sort.to_s())
+                text = ""
                 if(@verbose == 2)
-                        print(" = #{sixes + fives}")
+                        text = sprintf("%3d = ", sixes + fives)
                 elsif(@verbose > 2)
-                        print(" (Ones: #{ones}, Misses: #{dice - sixes - fives}, Hits: #{sixes + fives})")
+                        text = sprintf("(Ones: %3d, Misses: %3d, Hits: %3d) = ", ones, dice - sixes - fives, sixes + fives)
                 end
-                puts()
+                puts(text + output.sort.to_s())
         end
 
         if( (ones * 2) >= dice)
