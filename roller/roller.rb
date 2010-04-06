@@ -37,7 +37,7 @@ class Roller
     
     def initialize()
         @maximum = 1000
-        @verbose = false
+        @verbose = 0
         @dramatic = nil
         @abort = 0
 
@@ -81,7 +81,7 @@ class Roller
                         @dramatic = val
                 end
         end
-        @options.on("--verbose", "-v", "Report every roll.") {|val| @verbose = true; }
+        @options.on("--verbose", "-v", "Print extra roll information. May be given up to 3 times.") {|val| @verbose += 1; }
         @options.on("--help", "-h", "--about", "This message.") {|val| puts @options.to_s(); exit; }
 
         # Here we handle the ugliness of "doing the right thing"
@@ -161,8 +161,14 @@ class Roller
                 end
         end
 
-        if(@verbose)
-                puts(output.sort.to_s())
+        if(@verbose > 0)
+                print(output.sort.to_s())
+                if(@verbose == 2)
+                        print(" = #{sixes + fives}")
+                elsif(@verbose > 2)
+                        print(" (Ones: #{ones}, Misses: #{dice - sixes - fives}, Hits: #{sixes + fives})")
+                end
+                puts()
         end
 
         if( (ones * 2) >= dice)
