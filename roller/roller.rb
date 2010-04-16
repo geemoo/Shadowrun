@@ -76,9 +76,9 @@ class Roller
                 leader = true
                 leader_dice = val
         end
-        @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 5.0) seconds between rolls.", Float) do |val| 
+        @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 5.0) seconds between rolls.", Integer) do |val| 
                 if(val == nil)
-                        @dramatic = 5.0
+                        @dramatic = 3
                 else
                         @dramatic = val
                 end
@@ -170,10 +170,8 @@ class Roller
                                 ones = ones.next()
                         end
                 end
-                if(@dramatic != nil)
-                        sleep(rand(@dramatic))
-                        put(".")
-                end
+
+                drama_dots()
         end
 
         if(@verbose > 0)
@@ -190,6 +188,16 @@ class Roller
             raise GlitchException.new(fives + sixes)
         end
         return [ fives, sixes ]
+    end
+
+    def drama_dots()
+        if(@dramatic != nil)
+                @dramatic.times() do |i| 
+                        sleep(1.0)
+                        print(".")
+                end
+                puts()
+        end
     end
 
     # Garuantees that the input is <= @maximum
@@ -325,10 +333,7 @@ class Roller
                 output.push(rand(@dice[1]) + 1)
         end
         
-        if(@dramatic != nil)
-                sleep(rand(@dramatic))
-                put(".")
-        end
+        drama_dots()
 
         puts(output.sort.to_s())
     end
