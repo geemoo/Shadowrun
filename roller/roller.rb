@@ -76,7 +76,7 @@ class Roller
                 leader = true
                 leader_dice = val
         end
-        @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 5.0) seconds between rolls.", Integer) do |val| 
+        @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 3) seconds between rolls.", Integer) do |val| 
                 if(val == nil)
                         @dramatic = 3
                 else
