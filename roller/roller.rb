@@ -264,7 +264,7 @@ class Roller
                 # If this is a teamwork test, roll team dice
                 # All team members are limited by the leaders skill (--max), if provided
                 # Critical glitches will reduce net hits by 3
-                team = max(teamwork( @dice[0..-2] ) { hits = hits -3 } )
+                team = max(teamwork( @dice[0..-2] ) { hits = hits - 3 } )
                 # Do a standard roll, adding the team hits to Leader
                 result = roll( @dice.last() + team )
                 # Sum the hits
