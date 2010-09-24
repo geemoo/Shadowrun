@@ -258,7 +258,7 @@ class Roller
         rolls = 0
 
         begin
-            # @dice.list() is a synonym for Leader
+            # @dice.last() is a synonym for Leader
             while( hits < threshold && @dice.last() > @abort && hits >= 0)
                 rolls += 1
                 # If this is a teamwork test, roll team dice
@@ -301,25 +301,27 @@ class Roller
     def teamwork(teammates)
         assist_dice = 0
 
-        if( teammates != nil)
+        if(teammates != nil)
                 teammates.each do |t|
-                        begin
-                                result = roll(t)
-                        rescue GlitchException
-                                if($!.hits < 1)
-                                        # Critical glitch
-                                        # Let the caller modify it's own variable
-                                        yield
-                                        result = [0, 0]
-                                else
-                                        # Ignore regular glitches;
-                                        # do this by restarting the loop.  
-                                        # Harmless.
-                                        retry
+                        if (t > @abort)
+                                begin
+                                        result = roll(t)
+                                rescue GlitchException
+                                        if($!.hits < 1)
+                                                # Critical glitch
+                                                # Let the caller modify it's own variable
+                                                yield
+                                                result = [0, 0]
+                                        else
+                                                # Ignore regular glitches;
+                                                # do this by restarting the loop.  
+                                                # Harmless.
+                                                retry
+                                        end
                                 end
-                        end
 
-                        assist_dice += result[0] + result[1]
+                                assist_dice += result[0] + result[1]
+                        end
                 end
         end
 
