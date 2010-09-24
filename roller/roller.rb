@@ -257,21 +257,37 @@ class Roller
         hits = 0
         rolls = 0
 
+        # Needed for the improved teamwork algorithm
+        local_dice = Array.new(@dice)
+        @dice = Array.new()
+        @dice.push(local_dice.pop())
+
         begin
             # @dice.last() is a synonym for Leader
             while( hits < threshold && @dice.last() > @abort && hits >= 0)
                 rolls += 1
+                
                 # If this is a teamwork test, roll team dice
                 # All team members are limited by the leaders skill (--max), if provided
                 # Critical glitches will reduce net hits by 3
                 team = max(teamwork( @dice[0..-2] ) { hits = hits - 3 } )
+
                 # Do a standard roll, adding the team hits to Leader
                 result = roll( @dice.last() + team )
+
                 # Sum the hits
                 hits += max(result[0] + result[1])
+
                 # Reduce the dice pools if using the extended test time restriction
                 # (normal extended tests should do this)
                 yield
+
+                # Improved teamwork
+                # Team mates only join in when their dice pool is of equal size
+                # to the leader, optimizing --max, and reducing Glitch issues
+                if(local_dice.last() >= @dice.last())
+                        @dice.unshift(local_dice.pop())
+                end
             end
         rescue GlitchException
             if($!.hits <= 0)
