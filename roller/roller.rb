@@ -271,6 +271,13 @@ class Roller
             # @dice.last() is a synonym for Leader
             while( hits < threshold && @dice.last() > @abort && hits >= 0)
                 rolls += 1
+
+                # Improved teamwork
+                # Team mates only join in when their dice pool is of equal size
+                # to the leader, optimizing --max, and reducing Glitch issues
+                if(!local_dice.empty? && local_dice.last() >= @dice.last())
+                        @dice.unshift(local_dice.pop())
+                end
                 
                 # If this is a teamwork test, roll team dice
                 # All team members are limited by the leaders skill (--max), if provided
@@ -286,13 +293,6 @@ class Roller
                 # Reduce the dice pools if using the extended test time restriction
                 # (normal extended tests should do this)
                 yield
-
-                # Improved teamwork
-                # Team mates only join in when their dice pool is of equal size
-                # to the leader, optimizing --max, and reducing Glitch issues
-                if(local_dice.last() >= @dice.last())
-                        @dice.unshift(local_dice.pop())
-                end
             end
         rescue GlitchException
             if($!.hits <= 0)
