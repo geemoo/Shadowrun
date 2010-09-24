@@ -40,6 +40,7 @@ class Roller
         @verbose = 0
         @dramatic = nil
         @abort = 0
+        @rush = false
 
         switch = "roll"
         leader = false
@@ -55,6 +56,7 @@ class Roller
   Usage: roller [options] dice | diceDfacets
   Options:"
         @options.on("--max MAXIMUM", "-m", "Limit hits to MAXIMUM per roll", Integer) {|val| @maximum = val; }
+        @options.on("--rush", "-r", "Rush job.") {|val| @rush = true; }
         @options.on("--edge", "-e", "Result in hits.") {|val| switch = "edge" }
         @options.on("--extended THRESHOLD", "-x", "Result in intervals.", Integer) do |val| 
             switch = "extended"
@@ -171,6 +173,10 @@ class Roller
                                 sixes = sixes.next()
                         when 4
                                 fives = fives.next()
+                        when 1
+                                if(@rush)
+                                        ones = ones.next()
+                                end
                         when 0
                                 ones = ones.next()
                         end
@@ -270,7 +276,11 @@ class Roller
         begin
             # @dice.last() is a synonym for Leader
             while( hits < threshold && @dice.last() > @abort && hits >= 0)
-                rolls += 1
+                if(@rush)
+                        rolls += 0.5
+                else
+                        rolls += 1
+                end
 
                 # Improved teamwork
                 # Team mates only join in when their dice pool is of equal size
