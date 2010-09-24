@@ -118,6 +118,11 @@ class Roller
         immutable_dice = Array.new(@dice)
     
         iterations.times() do |i|
+
+                if(@verbose > 2)
+                        puts("Ones    Misses      Hits")
+                end
+
                 case switch
 
                 when "edge"
@@ -179,7 +184,7 @@ class Roller
                 if(@verbose == 2)
                         text = sprintf("%3d = ", sixes + fives)
                 elsif(@verbose > 2)
-                        text = sprintf("(Ones: %3d, Misses: %3d, Hits: %3d) = ", ones, dice - sixes - fives, sixes + fives)
+                        text = sprintf("%3d       %3d       %3d    = ", ones, dice - sixes - fives, sixes + fives)
                 end
                 puts(text + output.sort.to_s())
         end
