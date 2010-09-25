@@ -37,9 +37,9 @@ class Roller
   
   def initialize()
     @maximum = 1000
-    @verbose = 0
-    @dramatic = nil
-    @abort = 0
+    @verbose = 1
+    @dramatic = 3
+    @abort = 2
     @rush = false
 
     switch = "roll"
@@ -67,10 +67,8 @@ class Roller
       threshold = val
     end
     @options.on("--iterations TIMES", "-i", "Perform the test TIMES times.", Integer) {|val| iterations = val; }
-    @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.", Integer) do |val| 
-      if(val == nil)
-        @abort = 2
-      else
+    @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.  Default #{@abort}.", Integer) do |val| 
+      if(val != nil)
         @abort = val
       end
     end
@@ -78,14 +76,13 @@ class Roller
       leader = true
       leader_dice = val
     end
-    @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 3) seconds between rolls.", Integer) do |val| 
-      if(val == nil)
-        @dramatic = 3
-      else
+    @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default #{@dramatic}) seconds between rolls.", Integer) do |val| 
+      if(val != nil)
         @dramatic = val
       end
     end
-    @options.on("--verbose", "-v", "Print extra roll information. May be given up to 3 times.") {|val| @verbose += 1; }
+    @options.on("--verbose", "-v", "Print extra roll information. May be given up to #{3 - @verbose} times.") {|val| @verbose += 1; }
+    @options.on("--quiet", "-q", "Print less roll information. --verbose and --quiet cancel each other.") {|val| @verbose -= 1; }
     @options.on("--help", "-h", "--about", "This message.") {|val| puts @options.to_s(); exit; }
 
     # Here we handle the ugliness of "doing the right thing"
