@@ -285,14 +285,14 @@ class Roller
                 # Improved teamwork
                 # Team mates only join in when their dice pool is of equal size
                 # to the leader, optimizing --max, and reducing Glitch issues
-                if(!local_dice.empty? && local_dice.last() >= @dice.last())
+                while(!local_dice.empty? && local_dice.last() >= @dice.last())
                         @dice.unshift(local_dice.pop())
                 end
                 
                 # If this is a teamwork test, roll team dice
                 # All team members are limited by the leaders skill (--max), if provided
                 # Critical glitches will reduce net hits by 3
-                team = max(teamwork( @dice[0..-2] ) { hits = hits - 3 } )
+                team = max(teamwork( @dice[0..-2] ) { threshold = threshold + 1 } )
 
                 # Do a standard roll, adding the team hits to Leader
                 result = roll( @dice.last() + team )
