@@ -38,8 +38,8 @@ class Roller
   def initialize()
     @maximum = 1000
     @verbose = 1
-    @dramatic = 3
-    @abort = 2
+    @dramatic = nil
+    @abort = nil
     @rush = false
 
     switch = "roll"
@@ -67,8 +67,10 @@ class Roller
       threshold = val
     end
     @options.on("--iterations TIMES", "-i", "Perform the test TIMES times.", Integer) {|val| iterations = val; }
-    @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.  Default #{@abort}.", Integer) do |val| 
-      if(val != nil)
+    @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.  Default 2.", Integer) do |val| 
+      if(val == nil)
+        @abort = 2
+      else
         @abort = val
       end
     end
@@ -76,8 +78,10 @@ class Roller
       leader = true
       leader_dice = val
     end
-    @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default #{@dramatic}) seconds between rolls.", Integer) do |val| 
-      if(val != nil)
+    @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 3) seconds between rolls.", Integer) do |val| 
+      if(val == nil)
+        @dramatic = 3
+      else
         @dramatic = val
       end
     end
