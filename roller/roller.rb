@@ -163,7 +163,7 @@ class Roller
 
     output = [ ]
     
-    if(dice > @abort)
+    if(@abort == nil || dice > @abort)
       dice.times() do |i|
         display = rand(6)
 
