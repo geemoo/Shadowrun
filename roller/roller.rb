@@ -291,9 +291,8 @@ class Roller
         end
         
         # If this is a teamwork test, roll team dice
-        # All team members are limited by the leaders skill (--max), if provided
         # Critical glitches will reduce net hits by 3
-        team = max(teamwork( @dice[0..-2] ) { threshold = threshold + 1 } )
+        team = teamwork( @dice[0..-2] ) { threshold = threshold + 1 }
 
         # Do a standard roll, adding the team hits to Leader
         result = roll( @dice.last() + team )
@@ -311,7 +310,11 @@ class Roller
       else
         hits -=  rand(6) + 1 
         if( hits <= 0 )
-          return "Fail (#{rolls})"
+          if (@verbose > 1)
+            return "Fail (glitch) (#{rolls})"
+          else
+            return "Fail (#{rolls})"
+          end
         else
           retry
         end
@@ -354,7 +357,8 @@ class Roller
             end
           end
 
-          assist_dice += result[0] + result[1]
+          # All team members are limited by the leaders skill (--max), if provided
+          assist_dice += max(result[0] + result[1])
         end
       end
     end
