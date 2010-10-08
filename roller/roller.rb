@@ -36,7 +36,7 @@ class Roller
   end
   
   def initialize()
-    @maximum = 1000
+    @maximum = 9000000
     @verbose = 1
     @dramatic = nil
     @abort = nil
