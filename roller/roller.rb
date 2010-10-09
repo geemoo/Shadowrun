@@ -276,7 +276,7 @@ class Roller
 
     begin
       # @dice.last() is a synonym for Leader
-      while( hits < threshold && @dice.last() > @abort && hits >= 0)
+      while( hits < threshold && (@abort == nil || @dice.last() > @abort) && hits >= -1)
         if(@rush)
           rolls += 0.5
         else
