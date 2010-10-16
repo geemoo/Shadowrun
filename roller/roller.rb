@@ -340,7 +340,7 @@ class Roller
 
     if(teammates != nil)
       teammates.each do |t|
-        if (t > @abort)
+        if (@abort != nil && t > @abort)
           begin
             result = roll(t)
           rescue GlitchException
