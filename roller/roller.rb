@@ -41,6 +41,7 @@ class Roller
     @dramatic = nil
     @abort = nil
     @rush = false
+    @standard = false
 
     switch = "roll"
     leader = false
@@ -57,16 +58,6 @@ class Roller
   Options:"
     @options.on("--max MAXIMUM", "-m", "Limit hits to MAXIMUM per roll", Integer) {|val| @maximum = val; }
     @options.on("--rush", "-r", "Rush job.") {|val| @rush = true; }
-    @options.on("--edge", "-e", "Result in hits.") {|val| switch = "edge" }
-    @options.on("--extended THRESHOLD", "-x", "Result in intervals.", Integer) do |val| 
-      switch = "extended"
-      threshold = val
-    end
-    @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Result in intervals.", Integer) do |val| 
-      switch = "unlimited"
-      threshold = val
-    end
-    @options.on("--iterations TIMES", "-i", "Perform the test TIMES times.", Integer) {|val| iterations = val; }
     @options.on("--abort [POOL]", "-a", "Abort any roll with a pool less than or equal to POOL.  Default 2.", Integer) do |val| 
       if(val == nil)
         @abort = 2
@@ -78,6 +69,16 @@ class Roller
       leader = true
       leader_dice = val
     end
+    @options.on("--extended THRESHOLD", "-x", "Result in intervals.", Integer) do |val| 
+      switch = "extended"
+      threshold = val
+    end
+    @options.on("--unlimited THRESHOLD", "-u", "Unlimited extended.  Result in intervals.", Integer) do |val| 
+      switch = "unlimited"
+      threshold = val
+    end
+    @options.on("--edge", "-e", "Result in hits.") {|val| switch = "edge" }
+    @options.on("--iterations TIMES", "-i", "Perform the test TIMES times.", Integer) {|val| iterations = val; }
     @options.on("--drama [TIME]", "-d", "Wait for 1 to TIME (default 3) seconds between rolls.", Integer) do |val| 
       if(val == nil)
         @dramatic = 3
@@ -118,31 +119,32 @@ class Roller
       exit
     end
 
+    if(@verbose > 2)
+      puts("Ones    Misses      Hits")
+    end
+
     immutable_dice = Array.new(@dice)
     
     iterations.times() do |i|
-
-      if(@verbose > 2)
-        puts("Ones    Misses      Hits")
-      end
+      # Yes, @dice is basically a global variable.
+      # I did it this way because _every_ function uses it, but it's still wrong.
+      # It becomes a problem here, where @dice is being modified,
+      # but is re-used if -i is present.
+      @dice = Array.new(immutable_dice)
 
       case switch
 
       when "edge"
         puts(edge())
       when "extended"
-        # Yes, @dice is basically a global variable.
-        # I did it this way because _every_ function uses it, but it's still wrong.
-        # It becomes a problem here, where @dice is being modified,
-        # but is re-used if -i is present.
-        @dice = Array.new(immutable_dice)
         puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
       when "unlimited"
         puts(extended(threshold) { })
       when "facets"
         puts(facets())
       when "roll"
-        puts(standard())
+        @standard = true
+        puts(extended(1) { @dice.map! {|d| d - 1;}; } )
       else
         puts("Error:  #{ARGV}")
       end
@@ -221,20 +223,6 @@ class Roller
     end
   end
   
-  # Rolls a standard (non-edge, non-extended) test
-  def standard()
-    hits = 0
-    begin
-      team = max(teamwork( @dice[0..-2] ) { hits = hits - 1 } )
-      result = roll( @dice.last() + team )
-      hits = max(result[0] + result[1])
-      return hits
-    rescue GlitchException
-      print($!.to_s())
-      return ""
-    end
-  end
-  
   # Rolls an edge test, which rerolls 6's recursively
   def edge()
     # Bootstrap a standard test
@@ -286,16 +274,22 @@ class Roller
         # Improved teamwork
         # Team mates only join in when their dice pool is of equal size
         # to the leader, optimizing --max, and reducing Glitch issues
-        while(!local_dice.empty? && local_dice.last() >= @dice.last())
+        while(!local_dice.empty? && (@standard || local_dice.last() >= @dice.last()))
           @dice.unshift(local_dice.pop())
         end
         
         # If this is a teamwork test, roll team dice
         # Critical glitches will reduce net hits by 3
-        team = teamwork( @dice[0..-2] ) { threshold = threshold + 1 }
+        team = teamwork( @dice[0..-2] ) { hits -= 3 }
 
         # Do a standard roll, adding the team hits to Leader
         result = roll( @dice.last() + team )
+
+        # Pretty print teamwork tests.
+        # Put a newline between each team test.
+        if(@verbose > 1 && @dice.length() > 1)
+                puts("")
+        end
 
         # Sum the hits
         hits += max(result[0] + result[1])
@@ -321,7 +315,7 @@ class Roller
       end
     end
 
-    if(@verbose == 1)
+    if(@verbose == 1 || @standard)
       puts("Hits: #{hits}")
     elsif(@verbose > 2)
       puts("Hits: #{hits} of #{threshold}")
@@ -340,7 +334,7 @@ class Roller
 
     if(teammates != nil)
       teammates.each do |t|
-        if (@abort != nil && t > @abort)
+        if (@abort != nil && (@standard || t > @abort))
           begin
             result = roll(t)
           rescue GlitchException
