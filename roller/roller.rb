@@ -144,7 +144,7 @@ class Roller
         puts(facets())
       when "roll"
         @standard = true
-        puts(extended(1) { @dice.map! {|d| d - 1;}; } )
+        print(extended(1) { @dice.map! {|d| d - 1;}; } )
       else
         puts("Error:  #{ARGV}")
       end
@@ -322,11 +322,8 @@ class Roller
     end
 
     if(hits >= threshold)
-      # Delete the newline that the caller will put in place
-      # This couples the functions together, as they know
-      # far too much about each other at this point.
       if(@standard)
-        return "\b"
+        return ""
       else
         return rolls
       end
