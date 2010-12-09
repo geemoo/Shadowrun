@@ -322,7 +322,14 @@ class Roller
     end
 
     if(hits >= threshold)
-      return rolls
+      # Delete the newline that the caller will put in place
+      # This couples the functions together, as they know
+      # far too much about each other at this point.
+      if(@standard)
+        return "\b"
+      else
+        return rolls
+      end
     else
       return "Fail (#{rolls})"
     end
