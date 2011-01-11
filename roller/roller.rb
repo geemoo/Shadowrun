@@ -39,7 +39,7 @@ class Roller
     @maximum = 9000000
     @verbose = 1
     @dramatic = nil
-    @abort = nil
+    @abort = -1
     @rush = false
     @standard = false
 
@@ -138,13 +138,13 @@ class Roller
         puts(edge())
       when "extended"
         puts(extended(threshold) { @dice.map! {|d| d - 1;}; } )
+      when "roll"
+        @standard = true
+        print(extended(1) { @dice.map! {|d| d - 1;}; } )
       when "unlimited"
         puts(extended(threshold) { })
       when "facets"
         puts(facets())
-      when "roll"
-        @standard = true
-        print(extended(1) { @dice.map! {|d| d - 1;}; } )
       else
         puts("Error:  #{ARGV}")
       end
@@ -165,7 +165,7 @@ class Roller
 
     output = [ ]
     
-    if(@abort == nil || dice > @abort)
+    if(dice > @abort)
       dice.times() do |i|
         display = rand(6)
 
@@ -264,7 +264,8 @@ class Roller
 
     begin
       # @dice.last() is a synonym for Leader
-      while( hits < threshold && (@abort == nil || @dice.last() > @abort) && hits >= -1)
+      while( hits < threshold && (@dice.last() > @abort) && hits >= -1)
+      
         if(@rush)
           rolls += 0.5
         else
@@ -338,7 +339,7 @@ class Roller
 
     if(teammates != nil)
       teammates.each do |t|
-        if (@abort != nil && (@standard || t > @abort))
+        if (@standard || t > @abort)
           begin
             result = roll(t)
           rescue GlitchException
